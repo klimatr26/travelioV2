@@ -1,0 +1,15 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "http://aureacuen.runasp.net/EmitirFacturaHotelWS.asmx?WSDL"
+    ],
+    "namespaceMappings": [
+      "*, TravelioSOAP.Habitaciones.EmitirFacturaHotel"
+    ],
+    "outputFile": "Reference.cs",
+    "targetFramework": "net10.0",
+    "typeReuseMode": "All"
+  }
+}

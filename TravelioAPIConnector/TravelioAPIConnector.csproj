@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Habitaciones\" />
+    <Folder Include="Mesas\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TravelioREST\TravelioREST.csproj" />
+    <ProjectReference Include="..\TravelioSOAP\TravelioSOAP.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "http://dragonrojosoap.runasp.net/BusBusquedaWS.asmx?WSDL"
+    ],
+    "namespaceMappings": [
+      "*, TravelioSOAP.Mesas.Busqueda"
+    ],
+    "outputFile": "Reference.cs",
+    "targetFramework": "net10.0",
+    "typeReuseMode": "All"
+  }
+}

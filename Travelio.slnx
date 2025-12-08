@@ -1,0 +1,10 @@
+<Solution>
+  <Project Path="TravelioAPIConnector/TravelioAPIConnector.csproj" Id="c7ea1597-3323-4e37-b0b2-694f1b04f310" />
+  <Project Path="TravelioBankConnector/TravelioBankConnector.csproj" Id="155383da-9174-4ef6-9db5-3de985ad8b38" />
+  <Project Path="TravelioDatabaseConnector/TravelioDatabaseConnector.csproj" Id="87f66384-dbc5-49f9-a043-24c73e367daf" />
+  <Project Path="TravelioDBAdministrator/TravelioDBAdministrator.csproj" Id="4dbe2258-3daa-4a81-b4c8-780b90c6b01e" />
+  <Project Path="TravelioIntegrator/TravelioIntegrator.csproj" Id="9dca76b8-3d9f-44df-8768-fa65165e069f" />
+  <Project Path="TravelioREST/TravelioREST.csproj" />
+  <Project Path="TravelioSOAP/TravelioSOAP.csproj" Id="6f4905af-6cf4-4751-a771-f1ca526f7bd1" />
+  <Project Path="TravelioTestConsoleApp/TravelioTestConsoleApp.csproj" Id="78dcfa7d-7cc3-4a6d-b764-c4d5158ea3c3" />
+</Solution>

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Habitaciones\" />
+    <Folder Include="Mesas\" />
+    <Folder Include="Paquetes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TravelioAPIConnector\TravelioAPIConnector.csproj" />
+    <ProjectReference Include="..\TravelioBankConnector\TravelioBankConnector.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,15 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "http://cuencautosrenta.runasp.net/WS_BuscarDatos.asmx?WSDL"
+    ],
+    "namespaceMappings": [
+      "*, TravelioSOAP.Autos.DatosReserva"
+    ],
+    "outputFile": "Reference.cs",
+    "targetFramework": "net10.0",
+    "typeReuseMode": "All"
+  }
+}

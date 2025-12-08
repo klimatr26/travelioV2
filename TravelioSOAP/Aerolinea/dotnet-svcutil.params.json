@@ -1,0 +1,16 @@
+{
+  "providerId": "Microsoft.Tools.ServiceModel.Svcutil",
+  "version": "8.0.0",
+  "options": {
+    "inputs": [
+      "http://withflysoaint.runasp.net/IntegracionService.asmx?wsdl"
+    ],
+    "namespaceMappings": [
+      "*, TravelioSOAP.Aerolinea"
+    ],
+    "outputFile": "Reference.cs",
+    "serializerMode": "XmlSerializer",
+    "targetFramework": "net10.0",
+    "typeReuseMode": "All"
+  }
+}
