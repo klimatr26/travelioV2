@@ -90,6 +90,6 @@ public static class InvoiceGenerator
         var response = await Global.CachedHttpClient.PostAsJsonAsync(uri, request);
         response.EnsureSuccessStatusCode();
         var facturaResponse = await response.Content.ReadFromJsonAsync<FacturaResponse>();
-        return facturaResponse ?? throw new NotImplementedException();
+        return facturaResponse ?? throw new InvalidOperationException("El servicio de facturación no está disponible o envió una respuesta no válida");
     }
 }

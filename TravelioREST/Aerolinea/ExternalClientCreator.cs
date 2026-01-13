@@ -65,7 +65,7 @@ public static class ExternalClientCreator
         var request = new ClienteRequestData
         {
             correo = correo,
-            nombre =  nombre,
+            nombre = nombre,
             apellido = apellido,
             fechaNacimiento = fechaNacimiento,
             tipoIdentificacion = tipoIdentificacion,

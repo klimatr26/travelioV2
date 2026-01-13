@@ -32,7 +32,7 @@ public static class MesaCancelarReserva
         //    id_reserva = id_reserva
         //};
         var fullUri = $"{uri}/{id_reserva}";
-        var response = await Global.CachedHttpClient.PutAsJsonAsync(uri, fullUri); // Cambiado de PostAsJsonAsync a PutAsJsonAsync
+        var response = await Global.CachedHttpClient.PutAsync(fullUri, null); // Cambiado de PostAsJsonAsync a PutAsJsonAsync
         response.EnsureSuccessStatusCode();
         var cancelarResponse = await response.Content.ReadFromJsonAsync<ReservaCancelarResponse>();
         return cancelarResponse ?? throw new InvalidOperationException();
