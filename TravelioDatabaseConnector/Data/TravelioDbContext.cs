@@ -853,13 +853,12 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 ObtenerReservaEndpoint = ""
             },
 
-            // Enlaces incorrectos
             new DetalleServicio
             {
                 Id = 505,
                 ServicioId = 5,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "http://skyandes.runasp.net/api/integracion/aerolinea",
+                UriBase = "http://integrationcaribbean.runasp.net/api/v1/integracion/aerolinea",
                 ObtenerProductosEndpoint = "/search",
                 RegistrarClienteEndpoint = "/usuarios/externo",
                 ConfirmarProductoEndpoint = "/availability",
@@ -929,7 +928,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 Id = 602,
                 ServicioId = 102,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "https://apigateway-hyaw.onrender.com/api/integracion",
+                UriBase = "https://apigateway-zebw.onrender.com/api/integracion",
                 ObtenerProductosEndpoint = "/habitaciones",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
@@ -963,7 +962,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 Id = 603,
                 ServicioId = 103,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "https://reca.azurewebsites.net/api/v1/hoteles",
+                UriBase = "https://hoteles-api-gateway-service.onrender.com/api/integracion",
                 ObtenerProductosEndpoint = "/habitaciones",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
@@ -997,7 +996,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 Id = 604,
                 ServicioId = 104,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "http://restbrisamar.runasp.net/api/v1/hoteles",
+                UriBase = "http://216.173.77.147:8080/api/integracion",
                 ObtenerProductosEndpoint = "/habitaciones",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
@@ -1031,7 +1030,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 Id = 605,
                 ServicioId = 105,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "http://restallpahousenyc.runasp.net/api/v1/hoteles",
+                UriBase = "http://23.230.3.250:8080/api/integracion",
                 ObtenerProductosEndpoint = "/habitaciones",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
