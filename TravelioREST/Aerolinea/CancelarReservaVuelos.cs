@@ -43,7 +43,7 @@ public class CancelarReservaVuelosResponse
 public class DataCancelarReservaVuelosResponse
 {
     public bool cancelado { get; set; }
-    public int valorPagado { get; set; }
+    public decimal valorPagado { get; set; }
     public string mensaje { get; set; }
 }
 

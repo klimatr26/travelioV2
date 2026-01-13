@@ -51,7 +51,7 @@ public class MesaReservaResponse
     public string identificacion { get; set; }
     public DateTime fechaReserva { get; set; }
     public int numeroPersonas { get; set; }
-    public int valorPagado { get; set; }
+    public decimal valorPagado { get; set; }
     public string uriFactura { get; set; }
 }
 
