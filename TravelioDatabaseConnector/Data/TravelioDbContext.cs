@@ -1030,7 +1030,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 Id = 605,
                 ServicioId = 105,
                 TipoProtocolo = TipoProtocolo.Rest,
-                UriBase = "http://23.230.3.250:8080/api/integracion",
+                UriBase = "http://23.230.3.250:5000/api/integracion",
                 ObtenerProductosEndpoint = "/habitaciones",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
