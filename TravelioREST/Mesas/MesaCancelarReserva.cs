@@ -19,7 +19,7 @@ namespace TravelioREST.Mesas;
 public class ReservaCancelarResponse
 {
     public bool exito { get; set; }
-    public int valorPagado { get; set; }
+    public decimal valorPagado { get; set; }
 }
 
 public static class MesaCancelarReserva

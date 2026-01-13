@@ -14,10 +14,10 @@ public class Mesa
     public int numeroMesa { get; set; }
     public string tipoMesa { get; set; }
     public int capacidad { get; set; }
-    public int precio { get; set; }
+    public decimal precio { get; set; }
     public string estado { get; set; }
     public string imagenURL { get; set; }
-    public object priceRange { get; set; }
+    public object? priceRange { get; set; }
 }
 
 //public class MesasListResponse
