@@ -33,18 +33,18 @@ public static class Connector
                 null,
                 null);
 
-            var paquetes = response.datos ?? Array.Empty<DatoPaquetes>();
+            var paquetes = response.datos ?? [];
             return paquetes.Select(dto => new Paquete(
-                dto.idPaquete ?? string.Empty,
-                dto.nombre ?? string.Empty,
-                dto.ciudad ?? string.Empty,
-                dto.pais ?? string.Empty,
-                dto.tipoActividad ?? string.Empty,
-                dto.capacidad,
-                dto.precioNormal,
-                dto.precioActual,
-                dto.imagenUrl ?? string.Empty,
-                dto.duracion)).ToArray();
+                dto.data.id.ToString(),
+                dto.data.nombre ?? string.Empty,
+                dto.data.ciudadNombre ?? string.Empty,
+                dto.data.pais ?? string.Empty,
+                dto.data.categoriaNombre ?? string.Empty,
+                dto.data.capacidad,
+                dto.data.precioBase,
+                dto.data.precioBase,
+                dto.data.imagenPrincipal ?? string.Empty,
+                dto.data.duracion)).ToArray();
         }
 
         var soapClient = new PaquetesServiceSoapClient(GetBinding(uri), new EndpointAddress(uri));
@@ -119,7 +119,7 @@ public static class Connector
         if (IsREST && !forceSoap)
         {
             var usuario = await CrearUsuarioPaquetes.CrearUsuarioAsync(uri, correo, nombre, apellido);
-            return usuario.idUsuario ?? string.Empty;
+            return usuario.id.ToString();
         }
 
         var soapClient = new PaquetesServiceSoapClient(GetBinding(uri), new EndpointAddress(uri));

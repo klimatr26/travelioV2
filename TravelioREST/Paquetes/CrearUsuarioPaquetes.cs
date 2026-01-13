@@ -12,17 +12,33 @@ public class UserRequest
     public string apellido { get; set; }
 }
 
+//public class UserResponse
+//{
+//    public string idUsuario { get; set; }
+//    public string correo { get; set; }
+//    public bool exitoso { get; set; }
+//    public string mensaje { get; set; }
+//}
+
 public class UserResponse
 {
-    public string idUsuario { get; set; }
-    public string correo { get; set; }
+    public DataUserResponse data { get; set; }
     public bool exitoso { get; set; }
     public string mensaje { get; set; }
 }
 
+public class DataUserResponse
+{
+    public int id { get; set; }
+    public string email { get; set; }
+    public string nombre { get; set; }
+    public string apellido { get; set; }
+    public bool esInterno { get; set; }
+}
+
 public static class CrearUsuarioPaquetes
 {
-    public static async Task<UserResponse> CrearUsuarioAsync(
+    public static async Task<DataUserResponse> CrearUsuarioAsync(
         string baseUri,
         string correo,
         string nombre,
@@ -38,6 +54,6 @@ public static class CrearUsuarioPaquetes
         var response = await httpClient.PostAsJsonAsync(baseUri, userRequest);
         response.EnsureSuccessStatusCode();
         var userResponse = await response.Content.ReadFromJsonAsync<UserResponse>();
-        return userResponse ?? throw new InvalidOperationException();
+        return userResponse?.data ?? throw new InvalidOperationException();
     }
 }

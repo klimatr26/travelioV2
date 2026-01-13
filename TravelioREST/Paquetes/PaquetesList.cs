@@ -6,13 +6,49 @@ using System.Web;
 
 namespace TravelioREST.Paquetes;
 
+//public class PaquetesListResponse
+//{
+//    public DatoPaquetes[] datos { get; set; }
+//    public PaginacionPaquetes paginacion { get; set; }
+//}
+
+//public class PaginacionPaquetes
+//{
+//    public int paginaActual { get; set; }
+//    public int limite { get; set; }
+//    public int totalPaginas { get; set; }
+//    public int totalElementos { get; set; }
+//}
+
+//public class DatoPaquetes
+//{
+//    public string idPaquete { get; set; }
+//    public string nombre { get; set; }
+//    public string ciudad { get; set; }
+//    public string pais { get; set; }
+//    public string tipoActividad { get; set; }
+//    public int capacidad { get; set; }
+//    public decimal precioNormal { get; set; }
+//    public decimal precioActual { get; set; }
+//    public string imagenUrl { get; set; }
+//    public int duracion { get; set; }
+//    public _LinksListarPaquetes[] _links { get; set; }
+//}
+
+//public class _LinksListarPaquetes
+//{
+//    public string href { get; set; }
+//    public string rel { get; set; }
+//    public string method { get; set; }
+//}
+
 public class PaquetesListResponse
 {
-    public DatoPaquetes[] datos { get; set; }
-    public PaginacionPaquetes paginacion { get; set; }
+    public DatoPaquetesListResponse[] datos { get; set; }
+    public PaginacionPaquetesListResponse paginacion { get; set; }
 }
 
-public class PaginacionPaquetes
+public class PaginacionPaquetesListResponse
 {
     public int paginaActual { get; set; }
     public int limite { get; set; }
@@ -20,22 +56,27 @@ public class PaginacionPaquetes
     public int totalElementos { get; set; }
 }
 
-public class DatoPaquetes
+public class DatoPaquetesListResponse
 {
-    public string idPaquete { get; set; }
-    public string nombre { get; set; }
-    public string ciudad { get; set; }
-    public string pais { get; set; }
-    public string tipoActividad { get; set; }
-    public int capacidad { get; set; }
-    public decimal precioNormal { get; set; }
-    public decimal precioActual { get; set; }
-    public string imagenUrl { get; set; }
-    public int duracion { get; set; }
-    public _LinksListarPaquetes[] _links { get; set; }
+    public DataPaquetesListResponse data { get; set; }
+    public _LinksPaquetesListResponse[] _links { get; set; }
 }
 
-public class _LinksListarPaquetes
+public class DataPaquetesListResponse
+{
+    public int id { get; set; }
+    public string nombre { get; set; }
+    public string ciudadNombre { get; set; }
+    public string pais { get; set; }
+    public decimal precioBase { get; set; }
+    public int duracion { get; set; }
+    public string categoriaNombre { get; set; }
+    public string imagenPrincipal { get; set; }
+    public string descripcion { get; set; }
+    public int capacidad { get; set; }
+}
+
+public class _LinksPaquetesListResponse
 {
     public string href { get; set; }
     public string rel { get; set; }

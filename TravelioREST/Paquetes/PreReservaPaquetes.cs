@@ -24,20 +24,36 @@ public class TuristaHold
     public string identificacion { get; set; }
 }
 
+//public class HoldResponse
+//{
+//    public string id_hold { get; set; }
+//    public DateTime fechaExpiracion { get; set; }
+//    public LinksHold[] _links { get; set; }
+//}
+
+//public class LinksHold
+//{
+//    public string href { get; set; }
+//    public string rel { get; set; }
+//    public string method { get; set; }
+//}
+
 public class HoldResponse
 {
     public string id_hold { get; set; }
+    public string pre_reserva_id { get; set; }
     public DateTime fechaExpiracion { get; set; }
-    public LinksHold[] _links { get; set; }
+    public string estado { get; set; }
+    public string mensaje { get; set; }
+    public _LinksHoldResponse[] _links { get; set; }
 }
 
-public class LinksHold
+public class _LinksHoldResponse
 {
     public string href { get; set; }
     public string rel { get; set; }
     public string method { get; set; }
 }
-
 
 public static class PreReservaPaquetes
 {
