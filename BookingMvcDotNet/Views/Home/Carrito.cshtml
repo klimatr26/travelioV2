@@ -246,7 +246,7 @@
 
             function syncDelete(title) {
                 let fd = new FormData(); fd.append('titulo', title);
-                fetch('/Home/EliminarDelCarritoApi', { method: 'POST', body: fd });
+                return fetch('/Home/EliminarDelCarritoApi', { method: 'POST', body: fd });
             }
 
             if (list) {
@@ -282,8 +282,10 @@
                             if (result.isConfirmed) {
                                 li.remove();
                                 recompute();
-                                syncDelete(title);
-                                if (!list.querySelector('[data-role="line"]')) location.reload();
+                                syncDelete(title)
+                                    .finally(() => {
+                                        if (!list.querySelector('[data-role="line"]')) location.reload();
+                                    });
                             }
                         });
                     }
