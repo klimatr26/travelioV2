@@ -7,7 +7,7 @@ namespace TravelioREST.Mesas;
 
 public class MesasDisponibilidadRequest
 {
-    public int idMesa { get; set; }
+    public int id_mesa { get; set; }
     public DateTime fecha { get; set; }
     public int numeroPersonas { get; set; }
 }
@@ -26,7 +26,7 @@ public static class VerificarDisponibilidadMesas
     {
         var request = new MesasDisponibilidadRequest
         {
-            idMesa = idMesa,
+            id_mesa = idMesa,
             fecha = fecha,
             numeroPersonas = numeroPersonas
         };
