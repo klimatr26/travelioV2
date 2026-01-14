@@ -998,7 +998,7 @@ public class TravelioDbContext(DbContextOptions<TravelioDbContext> options) : Db
                 ServicioId = 104,
                 TipoProtocolo = TipoProtocolo.Rest,
                 UriBase = "http://restbrisamar.runasp.net/api/v1/hoteles",
-                ObtenerProductosEndpoint = "/habitaciones",
+                ObtenerProductosEndpoint = "/search",
                 RegistrarClienteEndpoint = "/usuarios/externos",
                 ConfirmarProductoEndpoint = "/disponibilidad",
                 CrearPrerreservaEndpoint = "/prereserva",
