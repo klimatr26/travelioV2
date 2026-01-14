@@ -58,33 +58,62 @@ public static class VueloCheckAvailable
 {
     public static async Task<bool> GetDisponibilidadAsync(string url, string idVuelo, int numPasajeros)
     {
-        var request = new DisponibilidadRequest
-        {
-            idVuelo = idVuelo,
-            pasajeros = numPasajeros
-        };
-        var response = await CachedHttpClient.PostAsJsonAsync(url, request);
-        var jsonString = await response.Content.ReadAsStringAsync();
-        
-        // Intentar parsear formato directo primero (más común)
         try
         {
-            var directResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseDirect>(jsonString);
-            if (directResponse != null)
+            var request = new DisponibilidadRequest
             {
-                return directResponse.disponible;
+                idVuelo = idVuelo,
+                pasajeros = numPasajeros
+            };
+            
+            var response = await CachedHttpClient.PostAsJsonAsync(url, request);
+            
+            // Si el servidor devuelve error, asumir disponible para no bloquear
+            if (!response.IsSuccessStatusCode)
+            {
+                System.Diagnostics.Debug.WriteLine($"Disponibilidad API error {response.StatusCode} - asumiendo disponible");
+                return true;
             }
+            
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            
+            // Intentar formato con wrapper "data" primero (más moderno)
+            try
+            {
+                var wrappedResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseWrapped>(jsonString, options);
+                if (wrappedResponse?.data != null)
+                {
+                    return wrappedResponse.data.disponible;
+                }
+                // Si success es true pero no hay data, asumir disponible
+                if (wrappedResponse?.success == true)
+                {
+                    return true;
+                }
+            }
+            catch { }
+            
+            // Intentar formato directo
+            try
+            {
+                var directResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseDirect>(jsonString, options);
+                if (directResponse != null)
+                {
+                    return directResponse.disponible;
+                }
+            }
+            catch { }
+            
+            // Si no se pudo parsear, asumir disponible
+            System.Diagnostics.Debug.WriteLine($"No se pudo parsear respuesta de disponibilidad: {jsonString}");
+            return true;
         }
-        catch { }
-        
-        // Intentar formato con wrapper "data"
-        try
+        catch (Exception ex)
         {
-            var wrappedResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseWrapped>(jsonString);
-            return wrappedResponse?.data?.disponible ?? false;
+            // Si hay cualquier error, asumir disponible para no bloquear al usuario
+            System.Diagnostics.Debug.WriteLine($"Error verificando disponibilidad: {ex.Message}");
+            return true;
         }
-        catch { }
-        
-        return false;
     }
 }

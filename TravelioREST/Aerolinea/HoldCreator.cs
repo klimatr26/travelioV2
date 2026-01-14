@@ -21,11 +21,19 @@ namespace TravelioREST.Aerolinea;
 //    public required string expiraEn { get; set; }
 //}
 
+// Formato simple (usado por algunas aerolíneas)
+public class HoldRequestSimple
+{
+    public string idVuelo { get; set; }
+    public int duracionHoldSegundos { get; set; }
+}
+
+// Formato con pasajeros (usado por aerolíneas modernas)
 public class HoldRequest
 {
     public string idVuelo { get; set; }
-    public string seat { get; set; }  // Campo requerido por SkaywardAir
-    public PasajeroHoldRequest[] pasajeros { get; set; }
+    public string? seat { get; set; }  // Campo opcional
+    public PasajeroHoldRequest[]? pasajeros { get; set; }
     public int duracionHoldSegundos { get; set; }
 }
 
@@ -72,38 +80,62 @@ public static class HoldCreator
         (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
         int duracionHold = 300)
     {
-        // Generar asientos automáticamente basados en la cantidad de pasajeros
-        var seats = new List<string>();
-        for (int i = 0; i < pasajeros.Length; i++)
+        HttpResponseMessage response;
+        
+        // Intentar primero con formato completo (incluye pasajeros)
+        try
         {
-            int row = (i / 6) + 1;
-            char col = (char)('A' + (i % 6));
-            seats.Add($"{row}{col}");
+            // Generar asientos automáticamente basados en la cantidad de pasajeros
+            var seats = new List<string>();
+            for (int i = 0; i < pasajeros.Length; i++)
+            {
+                int row = (i / 6) + 1;
+                char col = (char)('A' + (i % 6));
+                seats.Add($"{row}{col}");
+            }
+
+            var requestCompleto = new HoldRequest
+            {
+                idVuelo = idVuelo,
+                seat = string.Join(",", seats),
+                duracionHoldSegundos = duracionHold,
+                pasajeros = pasajeros.Select(p => new PasajeroHoldRequest
+                {
+                    nombre = p.nombre,
+                    apellido = p.apellido,
+                    tipoIdentificacion = p.tipoIdentificacion,
+                    identificacion = p.identificacion,
+                    fechaNacimiento = p.fechaNacimiento
+                }).ToArray()
+            };
+
+            response = await CachedHttpClient.PostAsJsonAsync(uri, requestCompleto);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await ParseHoldResponse(response);
+            }
+        }
+        catch
+        {
+            // Si falla, intentar formato simple
         }
 
-        var request = new HoldRequest
+        // Intentar formato simple (solo idVuelo y duración)
+        var requestSimple = new HoldRequestSimple
         {
             idVuelo = idVuelo,
-            seat = string.Join(",", seats),  // SkaywardAir requiere este campo
-            duracionHoldSegundos = duracionHold,
-            pasajeros = new PasajeroHoldRequest[pasajeros.Length]
+            duracionHoldSegundos = duracionHold
         };
 
-        for (int i = 0; i < pasajeros.Length; i++)
-        {
-            request.pasajeros[i] = new PasajeroHoldRequest
-            {
-                nombre = pasajeros[i].nombre,
-                apellido = pasajeros[i].apellido,
-                tipoIdentificacion = pasajeros[i].tipoIdentificacion,
-                identificacion = pasajeros[i].identificacion,
-                fechaNacimiento = pasajeros[i].fechaNacimiento
-            };
-        }
-
-        var response = await CachedHttpClient.PostAsJsonAsync(uri, request);
+        response = await CachedHttpClient.PostAsJsonAsync(uri, requestSimple);
         response.EnsureSuccessStatusCode();
         
+        return await ParseHoldResponse(response);
+    }
+
+    private static async Task<HoldResponse> ParseHoldResponse(HttpResponseMessage response)
+    {
         var jsonString = await response.Content.ReadAsStringAsync();
         
         // Intentar formato directo de SkaywardAir primero

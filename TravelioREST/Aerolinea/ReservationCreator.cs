@@ -96,24 +96,28 @@ public static class ReservationCreator
         (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
         int cuentaProveedor = 0)
     {
-        // Primero intentar formato SkyAndes/SkaywardAir (según swagger)
-        try
+        // Si tenemos cuenta de proveedor, usar formato moderno con Payment
+        if (cuentaProveedor > 0)
         {
-            return await CreateReservationSkyAndesAsync(uri, idVuelo, idHold, correo, pasajeros, cuentaProveedor);
-        }
-        catch (HttpRequestException ex)
-        {
-            // Si es error de pago/saldo, re-lanzar para que el caller lo maneje
-            var errorMsg = ex.Message?.ToLowerInvariant() ?? "";
-            if (errorMsg.Contains("saldo") || errorMsg.Contains("payment") || errorMsg.Contains("cuenta"))
+            try
             {
-                throw;
+                return await CreateReservationSkyAndesAsync(uri, idVuelo, idHold, correo, pasajeros, cuentaProveedor);
             }
-            // Si es 400 por otro motivo, intentar formato alternativo
-        }
-        catch
-        {
-            // Si falla por otra razón, intentar formato original
+            catch (HttpRequestException ex)
+            {
+                // Si es error de pago/saldo, re-lanzar para que el caller lo maneje
+                var errorMsg = ex.Message?.ToLowerInvariant() ?? "";
+                if (errorMsg.Contains("saldo") || errorMsg.Contains("payment") || errorMsg.Contains("cuenta"))
+                {
+                    throw;
+                }
+                // Si es 400 por otro motivo, intentar formato alternativo
+            }
+            catch (Exception ex)
+            {
+                // Log pero continuar con formato alternativo
+                System.Diagnostics.Debug.WriteLine($"Formato moderno falló: {ex.Message}");
+            }
         }
 
         // Intentar formato original (otras aerolíneas como Withfly)
