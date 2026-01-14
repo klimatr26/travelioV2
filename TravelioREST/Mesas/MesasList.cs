@@ -79,10 +79,27 @@ public static class MesasList
         var response = await httpClient.GetAsync(url);
         response.EnsureSuccessStatusCode();
         
-        // La API devuelve { mensaje, total, mesas: [...] }
-        var mesasListResponse = await response.Content.ReadFromJsonAsync<MesasListResponse>(
-            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        var jsonOptions = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        var content = await response.Content.ReadAsStringAsync();
         
-        return mesasListResponse?.Mesas ?? [];
+        // Intentar primero como array directo (nuevo formato de algunas APIs)
+        try
+        {
+            var directArray = System.Text.Json.JsonSerializer.Deserialize<Mesa[]>(content, jsonOptions);
+            if (directArray != null && directArray.Length > 0)
+                return directArray;
+        }
+        catch { /* No es un array directo, intentar formato envuelto */ }
+        
+        // Intentar como objeto envuelto { mensaje, total, mesas: [...] }
+        try
+        {
+            var mesasListResponse = System.Text.Json.JsonSerializer.Deserialize<MesasListResponse>(content, jsonOptions);
+            if (mesasListResponse?.Mesas != null)
+                return mesasListResponse.Mesas;
+        }
+        catch { /* Formato no reconocido */ }
+        
+        return [];
     }
 }
