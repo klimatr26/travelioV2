@@ -183,21 +183,34 @@ public class RestaurantesService(TravelioDbContext dbContext, ILogger<Restaurant
                     var uri = $"{detalleRest.UriBase}{detalleRest.ConfirmarProductoEndpoint}";
                     return await MesaConnector.ValidarDisponibilidadAsync(uri, idMesa, fecha, personas);
                 }
-                catch { /* Fallback a SOAP */ }
+                catch (Exception ex) 
+                { 
+                    logger.LogWarning(ex, "REST falló verificando disponibilidad, intentando SOAP");
+                }
             }
 
             if (detalleSoap != null)
             {
-                var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
-                return await MesaConnector.ValidarDisponibilidadAsync(uri, idMesa, fecha, personas, forceSoap: true);
+                try
+                {
+                    var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
+                    return await MesaConnector.ValidarDisponibilidadAsync(uri, idMesa, fecha, personas, forceSoap: true);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "SOAP también falló verificando disponibilidad");
+                }
             }
 
-            return false;
+            // Si no se puede verificar, asumir disponible y validar al momento de reservar
+            logger.LogInformation("No se pudo verificar disponibilidad, asumiendo disponible para mesa {IdMesa}", idMesa);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verificando disponibilidad de mesa");
-            return false;
+            // Si falla, asumir disponible para no bloquear al usuario
+            return true;
         }
     }
 }

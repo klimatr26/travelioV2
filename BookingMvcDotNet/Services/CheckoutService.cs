@@ -266,8 +266,8 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         // 4. Pagar al proveedor
         await PagarProveedorAsync(servicio, item.PrecioFinal);
 
-        // 5. Registrar en DB
-        await RegistrarReservaEnDbAsync(item.ServicioId, reservaId.ToString(), reservaResult.FacturaProveedorUrl, compra);
+        // 5. Registrar en DB (con precio para facturas)
+        await RegistrarReservaEnDbAsync(item.ServicioId, reservaId.ToString(), reservaResult.FacturaProveedorUrl, compra, item.PrecioFinal);
 
         reservaResult.Exitoso = true;
     }
@@ -401,7 +401,7 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         }
 
         await PagarProveedorAsync(servicio, item.PrecioFinal);
-        await RegistrarReservaEnDbAsync(item.ServicioId, reservaId.ToString(), reservaResult.FacturaProveedorUrl, compra);
+        await RegistrarReservaEnDbAsync(item.ServicioId, reservaId.ToString(), reservaResult.FacturaProveedorUrl, compra, item.PrecioFinal);
 
         reservaResult.Exitoso = true;
     }
@@ -531,7 +531,7 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         }
 
         await PagarProveedorAsync(servicio, item.PrecioFinal);
-        await RegistrarReservaEnDbAsync(item.ServicioId, codigoReserva, reservaResult.FacturaProveedorUrl, compra);
+        await RegistrarReservaEnDbAsync(item.ServicioId, codigoReserva, reservaResult.FacturaProveedorUrl, compra, item.PrecioFinal);
 
         reservaResult.Exitoso = true;
     }
@@ -656,7 +656,7 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         }
 
         await PagarProveedorAsync(servicio, item.PrecioFinal);
-        await RegistrarReservaEnDbAsync(item.ServicioId, reserva.IdReserva, reservaResult.FacturaProveedorUrl, compra);
+        await RegistrarReservaEnDbAsync(item.ServicioId, reserva.IdReserva, reservaResult.FacturaProveedorUrl, compra, item.PrecioFinal);
 
         reservaResult.Exitoso = true;
     }
@@ -785,7 +785,7 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         }
 
         await PagarProveedorAsync(servicio, item.PrecioFinal);
-        await RegistrarReservaEnDbAsync(item.ServicioId, reserva.CodigoReserva, reservaResult.FacturaProveedorUrl, compra);
+        await RegistrarReservaEnDbAsync(item.ServicioId, reserva.CodigoReserva, reservaResult.FacturaProveedorUrl, compra, item.PrecioFinal);
 
         reservaResult.Exitoso = true;
     }
@@ -835,13 +835,20 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         }
     }
 
-    private async Task RegistrarReservaEnDbAsync(int servicioId, string codigoReserva, string? facturaUrl, Compra compra)
+    private async Task RegistrarReservaEnDbAsync(int servicioId, string codigoReserva, string? facturaUrl, Compra compra, decimal precioItem = 0)
     {
+        // Calcular comisión de Travelio (10%)
+        var comision = precioItem * COMISION_TRAVELIO;
+        var valorNegocio = precioItem - comision;
+
         var reservaDb = new DbReserva
         {
             ServicioId = servicioId,
             CodigoReserva = codigoReserva,
-            FacturaUrl = facturaUrl
+            FacturaUrl = facturaUrl,
+            ValorPagadoNegocio = valorNegocio,
+            ComisionAgencia = comision,
+            Activa = true
         };
         dbContext.Reservas.Add(reservaDb);
         await dbContext.SaveChangesAsync();
@@ -900,6 +907,12 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
 
             logger.LogInformation("Cancelando reserva {ReservaId} en {Servicio} via REST", reservaId, servicio.Nombre);
 
+            // Calcular monto a reembolsar basado en el valor guardado en la reserva
+            // Para vuelos: reembolso del 90%, para otros: reembolso del 100%
+            var valorTotalReserva = reserva.ValorPagadoNegocio + reserva.ComisionAgencia;
+            decimal porcentajeReembolso = tipoServicio == TipoServicio.Aerolinea ? 0.90m : 1.0m;
+            decimal montoReembolsoCalculado = valorTotalReserva * porcentajeReembolso;
+
             // Llamar al endpoint de cancelacion segun el tipo de servicio
             switch (tipoServicio)
             {
@@ -940,6 +953,13 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
 
             if (exito)
             {
+                // Usar el valor calculado si el proveedor devuelve 0
+                if (valorReembolsado <= 0 && montoReembolsoCalculado > 0)
+                {
+                    valorReembolsado = montoReembolsoCalculado;
+                    logger.LogInformation("Usando valor calculado para reembolso: ${Monto}", valorReembolsado);
+                }
+
                 // Reembolsar al cliente
                 if (valorReembolsado > 0)
                 {

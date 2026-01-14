@@ -8,12 +8,12 @@ namespace BookingMvcDotNet.Services;
 public interface IAutosService
 {
     /// <summary>
-    /// Busca vehículos en todos los proveedores activos según los filtros.
+    /// Busca vehï¿½culos en todos los proveedores activos segï¿½n los filtros.
     /// </summary>
     Task<AutosSearchViewModel> BuscarAutosAsync(AutosSearchViewModel filtros);
 
     /// <summary>
-    /// Obtiene el detalle de un auto específico de un proveedor.
+    /// Obtiene el detalle de un auto especï¿½fico de un proveedor.
     /// </summary>
     Task<AutoDetalleViewModel?> ObtenerAutoAsync(int servicioId, string idAuto);
 
@@ -26,4 +26,9 @@ public interface IAutosService
     /// Crea una prerreserva (hold) para un auto.
     /// </summary>
     Task<(bool exito, string mensaje)> CrearPrerreservaAsync(int servicioId, string idAuto, DateTime fechaInicio, DateTime fechaFin);
+
+    /// <summary>
+    /// DiagnÃ³stico de conexiones a servicios externos
+    /// </summary>
+    Task<object> DiagnosticarServiciosAsync();
 }

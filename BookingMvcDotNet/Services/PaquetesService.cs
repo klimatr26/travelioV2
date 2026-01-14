@@ -190,21 +190,27 @@ public class PaquetesService(TravelioDbContext dbContext, ILogger<PaquetesServic
                     var uri = $"{detalleRest.UriBase}{detalleRest.ConfirmarProductoEndpoint}";
                     return await PaqueteConnector.ValidarDisponibilidadAsync(uri, idPaquete, fechaInicio, personas);
                 }
-                catch { /* Fallback a SOAP */ }
+                catch (Exception ex) { logger.LogWarning(ex, "REST falló verificando disponibilidad paquete"); }
             }
 
             if (detalleSoap != null)
             {
-                var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
-                return await PaqueteConnector.ValidarDisponibilidadAsync(uri, idPaquete, fechaInicio, personas, forceSoap: true);
+                try
+                {
+                    var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
+                    return await PaqueteConnector.ValidarDisponibilidadAsync(uri, idPaquete, fechaInicio, personas, forceSoap: true);
+                }
+                catch (Exception ex) { logger.LogWarning(ex, "SOAP también falló verificando disponibilidad paquete"); }
             }
 
-            return false;
+            // Si no se puede verificar, asumir disponible
+            logger.LogInformation("No se pudo verificar disponibilidad, asumiendo disponible para paquete {IdPaquete}", idPaquete);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verificando disponibilidad de paquete");
-            return false;
+            return true;
         }
     }
 }

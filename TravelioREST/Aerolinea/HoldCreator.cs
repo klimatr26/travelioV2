@@ -24,6 +24,7 @@ namespace TravelioREST.Aerolinea;
 public class HoldRequest
 {
     public string idVuelo { get; set; }
+    public string seat { get; set; }  // Campo requerido por SkaywardAir
     public PasajeroHoldRequest[] pasajeros { get; set; }
     public int duracionHoldSegundos { get; set; }
 }
@@ -46,6 +47,15 @@ public class HoldResponse
     public DateTime timestamp { get; set; }
 }
 
+// Formato directo de SkaywardAir
+public class HoldResponseDirect
+{
+    public int IdVuelo { get; set; }
+    public string HoldId { get; set; }
+    public DateTime ExpiraEn { get; set; }
+    public object _links { get; set; }
+}
+
 public class DataHoldResponse
 {
     public bool success { get; set; }
@@ -62,9 +72,19 @@ public static class HoldCreator
         (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
         int duracionHold = 300)
     {
+        // Generar asientos automáticamente basados en la cantidad de pasajeros
+        var seats = new List<string>();
+        for (int i = 0; i < pasajeros.Length; i++)
+        {
+            int row = (i / 6) + 1;
+            char col = (char)('A' + (i % 6));
+            seats.Add($"{row}{col}");
+        }
+
         var request = new HoldRequest
         {
             idVuelo = idVuelo,
+            seat = string.Join(",", seats),  // SkaywardAir requiere este campo
             duracionHoldSegundos = duracionHold,
             pasajeros = new PasajeroHoldRequest[pasajeros.Length]
         };
@@ -83,7 +103,31 @@ public static class HoldCreator
 
         var response = await CachedHttpClient.PostAsJsonAsync(uri, request);
         response.EnsureSuccessStatusCode();
-        var holdResponse = await response.Content.ReadFromJsonAsync<HoldResponse>();
-        return holdResponse ?? throw new InvalidOperationException();
+        
+        var jsonString = await response.Content.ReadAsStringAsync();
+        
+        // Intentar formato directo de SkaywardAir primero
+        try
+        {
+            var directResponse = System.Text.Json.JsonSerializer.Deserialize<HoldResponseDirect>(jsonString);
+            if (directResponse != null && !string.IsNullOrEmpty(directResponse.HoldId))
+            {
+                return new HoldResponse
+                {
+                    success = true,
+                    data = new DataHoldResponse
+                    {
+                        success = true,
+                        idHold = directResponse.HoldId,
+                        expiresAt = directResponse.ExpiraEn
+                    }
+                };
+            }
+        }
+        catch { }
+        
+        // Intentar formato con wrapper
+        var holdResponse = System.Text.Json.JsonSerializer.Deserialize<HoldResponse>(jsonString);
+        return holdResponse ?? throw new InvalidOperationException("No se pudo deserializar la respuesta del hold");
     }
 }

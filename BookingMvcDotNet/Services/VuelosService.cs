@@ -193,21 +193,34 @@ public class VuelosService(TravelioDbContext dbContext, ILogger<VuelosService> l
                     var uri = $"{detalleRest.UriBase}{detalleRest.ConfirmarProductoEndpoint}";
                     return await Connector.VerificarDisponibilidadVueloAsync(uri, idVuelo, pasajeros);
                 }
-                catch { /* Fallback a SOAP */ }
+                catch (Exception ex) 
+                { 
+                    logger.LogWarning(ex, "REST falló verificando disponibilidad de vuelo, intentando SOAP");
+                }
             }
 
             if (detalleSoap != null)
             {
-                var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
-                return await Connector.VerificarDisponibilidadVueloAsync(uri, idVuelo, pasajeros, forceSoap: true);
+                try
+                {
+                    var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
+                    return await Connector.VerificarDisponibilidadVueloAsync(uri, idVuelo, pasajeros, forceSoap: true);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "SOAP también falló verificando disponibilidad de vuelo");
+                }
             }
 
-            return false;
+            // Si no se puede verificar, asumir disponible y validar al momento de reservar
+            logger.LogInformation("No se pudo verificar disponibilidad, asumiendo disponible para vuelo {IdVuelo}", idVuelo);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verificando disponibilidad de vuelo");
-            return false;
+            // Si falla, asumir disponible para no bloquear al usuario
+            return true;
         }
     }
 }

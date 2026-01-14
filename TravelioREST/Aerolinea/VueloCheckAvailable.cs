@@ -30,7 +30,8 @@ public class DisponibilidadRequest
     public int pasajeros { get; set; }
 }
 
-public class DisponibilidadResponse
+// Formato con wrapper "data" (algunos proveedores)
+public class DisponibilidadResponseWrapped
 {
     public bool success { get; set; }
     public string message { get; set; }
@@ -46,6 +47,13 @@ public class DataDisponibilidadResponse
     public int asientosDisponibles { get; set; }
 }
 
+// Formato directo (SkaywardAir y otros)
+public class DisponibilidadResponseDirect
+{
+    public bool disponible { get; set; }
+    public object _links { get; set; }
+}
+
 public static class VueloCheckAvailable
 {
     public static async Task<bool> GetDisponibilidadAsync(string url, string idVuelo, int numPasajeros)
@@ -56,7 +64,27 @@ public static class VueloCheckAvailable
             pasajeros = numPasajeros
         };
         var response = await CachedHttpClient.PostAsJsonAsync(url, request);
-        var disponibilidad = await response.Content.ReadFromJsonAsync<DisponibilidadResponse>();
-        return disponibilidad?.data?.disponible ?? false;
+        var jsonString = await response.Content.ReadAsStringAsync();
+        
+        // Intentar parsear formato directo primero (más común)
+        try
+        {
+            var directResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseDirect>(jsonString);
+            if (directResponse != null)
+            {
+                return directResponse.disponible;
+            }
+        }
+        catch { }
+        
+        // Intentar formato con wrapper "data"
+        try
+        {
+            var wrappedResponse = System.Text.Json.JsonSerializer.Deserialize<DisponibilidadResponseWrapped>(jsonString);
+            return wrappedResponse?.data?.disponible ?? false;
+        }
+        catch { }
+        
+        return false;
     }
 }

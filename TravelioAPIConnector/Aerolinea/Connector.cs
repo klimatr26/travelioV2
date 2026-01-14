@@ -26,17 +26,17 @@ public static class Connector
             var vuelosRest = await VuelosGetter.GetVuelosAsync(uri, origen, destino, fechaDespegue, fechaLlegada, tipoCabina, pasajeros, precioMin, precioMax);
 
             return Array.ConvertAll(vuelosRest, v => new Vuelo(
-                v.idVuelo ?? string.Empty,
-                v.origen ?? string.Empty,
-                v.destino ?? string.Empty,
-                v.fecha,
-                v.tipoCabina ?? string.Empty,
-                v.nombreAerolinea ?? string.Empty,
-                v.capacidadPasajeros,
-                v.capacidadActual,
-                v.precioNormal,
-                v.precioActual,
-                v.precioNormal == 0 ? 0 : (1 - (v.precioActual / v.precioNormal)) * 100m));
+                v.IdVuelo ?? string.Empty,
+                v.Origen ?? string.Empty,
+                v.Destino ?? string.Empty,
+                v.FechaSalida,
+                v.TipoCabina ?? string.Empty,
+                v.NombreAerolinea ?? string.Empty,
+                v.Pasajeros,
+                v.CapacidadDisponible,
+                v.PrecioNormal,
+                v.PrecioActual,
+                v.PrecioNormal == 0 ? 0 : (1 - (v.PrecioActual / v.PrecioNormal)) * 100m));
         }
 
         var client = new IntegracionServiceSoapClient(GetBinding(uri), new EndpointAddress(uri));

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Net.Http.Json;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Web;
 
 namespace TravelioREST.Paquetes;
@@ -22,6 +24,7 @@ public class PaginacionPaquetes
 
 public class DatoPaquetes
 {
+    [JsonConverter(typeof(StringOrNumberConverter))]
     public string idPaquete { get; set; }
     public string nombre { get; set; }
     public string ciudad { get; set; }
@@ -40,6 +43,24 @@ public class _LinksListarPaquetes
     public string href { get; set; }
     public string rel { get; set; }
     public string method { get; set; }
+}
+
+// Converter para manejar idPaquete como string o número
+public class StringOrNumberConverter : JsonConverter<string>
+{
+    public override string? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.Number)
+        {
+            return reader.GetInt64().ToString();
+        }
+        return reader.GetString();
+    }
+
+    public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value);
+    }
 }
 
 // https://worldagencybk.runasp.net/api/v2/paquetes?pais=Puerto%20Rico
@@ -102,7 +123,11 @@ public static class PaquetesList
         uriBuilder.Query = query.ToString();
 
         var url = uriBuilder.ToString();
-        var response = await httpClient.GetFromJsonAsync<PaquetesListResponse>(url);
+        var options = new JsonSerializerOptions 
+        { 
+            PropertyNameCaseInsensitive = true 
+        };
+        var response = await httpClient.GetFromJsonAsync<PaquetesListResponse>(url, options);
         return response ?? throw new InvalidOperationException();
     }
 }

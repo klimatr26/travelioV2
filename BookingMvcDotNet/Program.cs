@@ -10,7 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-// 1. ACTIVAMOS LA CACHÉ Y LA SESIÓN (Necesario para el carrito)
+// CORS para React Frontend
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactApp", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173", "http://localhost:5174", "http://localhost:3000")
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
+
+// 1. ACTIVAMOS LA CACHï¿½ Y LA SESIï¿½N (Necesario para el carrito)
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -26,7 +38,7 @@ var connectionString = builder.Configuration.GetConnectionString("TravelioDb")
 builder.Services.AddDbContext<TravelioDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// 3. SERVICIOS DE INTEGRACIÓN CON TRAVELIO
+// 3. SERVICIOS DE INTEGRACIï¿½N CON TRAVELIO
 builder.Services.AddScoped<IAutosService, AutosService>();
 builder.Services.AddScoped<IHotelesService, HotelesService>();
 builder.Services.AddScoped<IVuelosService, VuelosService>();
@@ -49,7 +61,7 @@ builder.Services.AddHttpClient<IBookingService, BookingService>(client =>
         client.BaseAddress = new Uri("http://localhost:5000/");
     }
 });
-// Nota: si tu API de backend está en otra URL, configura 'BookingApiBaseUrl' en appsettings.json o variables de entorno.
+// Nota: si tu API de backend estï¿½ en otra URL, configura 'BookingApiBaseUrl' en appsettings.json o variables de entorno.
 
 var app = builder.Build();
 
@@ -68,7 +80,7 @@ using (var scope = app.Services.CreateScope())
     catch (Exception ex)
     {
         Console.WriteLine($"?? Error inicializando base de datos: {ex.Message}");
-        Console.WriteLine("Asegúrate de que SQL Server esté corriendo y accesible.");
+        Console.WriteLine("Asegï¿½rate de que SQL Server estï¿½ corriendo y accesible.");
     }
 }
 
@@ -84,14 +96,17 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Helper para archivos estáticos (css, js, imagenes)
+// Helper para archivos estï¿½ticos (css, js, imagenes)
 app.UseStaticFiles();
 
 app.UseRouting();
 
+// CORS - Debe ir antes de Authorization
+app.UseCors("ReactApp");
+
 app.UseAuthorization();
 
-// USAMOS LA SESIÓN (IMPORTANTE: Debe ir antes de los controladores)
+// USAMOS LA SESIï¿½N (IMPORTANTE: Debe ir antes de los controladores)
 app.UseSession();
 
 app.MapControllerRoute(

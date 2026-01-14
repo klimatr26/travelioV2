@@ -248,21 +248,27 @@ public class HotelesService(TravelioDbContext dbContext, ILogger<HotelesService>
                     var uri = $"{detalleRest.UriBase}{detalleRest.ConfirmarProductoEndpoint}";
                     return await Connector.ValidarDisponibilidadAsync(uri, idHabitacion, fechaInicio, fechaFin);
                 }
-                catch { /* Fallback a SOAP */ }
+                catch (Exception ex) { logger.LogWarning(ex, "REST falló verificando disponibilidad habitación"); }
             }
 
             if (detalleSoap != null)
             {
-                var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
-                return await Connector.ValidarDisponibilidadAsync(uri, idHabitacion, fechaInicio, fechaFin, forceSoap: true);
+                try
+                {
+                    var uri = $"{detalleSoap.UriBase}{detalleSoap.ConfirmarProductoEndpoint}";
+                    return await Connector.ValidarDisponibilidadAsync(uri, idHabitacion, fechaInicio, fechaFin, forceSoap: true);
+                }
+                catch (Exception ex) { logger.LogWarning(ex, "SOAP también falló verificando disponibilidad habitación"); }
             }
 
-            return false;
+            // Si no se puede verificar, asumir disponible
+            logger.LogInformation("No se pudo verificar disponibilidad, asumiendo disponible para habitación {IdHabitacion}", idHabitacion);
+            return true;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error verificando disponibilidad");
-            return false;
+            return true;
         }
     }
 
