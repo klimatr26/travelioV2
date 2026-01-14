@@ -32,8 +32,8 @@ public static class Connector
                 v.FechaSalida,
                 v.TipoCabina ?? string.Empty,
                 v.NombreAerolinea ?? string.Empty,
-                v.Pasajeros,
-                v.CapacidadDisponible,
+                v.CapacidadPasajeros > 0 ? v.CapacidadPasajeros : v.Pasajeros,
+                v.CapacidadActual > 0 ? v.CapacidadActual : v.CapacidadDisponible,
                 v.PrecioNormal,
                 v.PrecioActual,
                 v.PrecioNormal == 0 ? 0 : (1 - (v.PrecioActual / v.PrecioNormal)) * 100m));
@@ -103,11 +103,12 @@ public static class Connector
         string idHold,
         string correo,
         (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
-        bool forceSoap = false)
+        bool forceSoap = false,
+        int cuentaProveedor = 0)
     {
         if (IsREST && !forceSoap)
         {
-            var reservaRest = await ReservationCreator.CreateReservationAsync(uri, idVuelo, idHold, correo, pasajeros);
+            var reservaRest = await ReservationCreator.CreateReservationAsync(uri, idVuelo, idHold, correo, pasajeros, cuentaProveedor);
             var reservaData = reservaRest.data ?? throw new InvalidOperationException("No se pudo crear la reserva.");
             return (reservaData.idReserva ?? string.Empty, reservaData.codigoReserva ?? string.Empty, reservaData.mensaje ?? string.Empty);
         }

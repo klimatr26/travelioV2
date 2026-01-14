@@ -10,12 +10,18 @@ using static TravelioREST.Global;
 
 namespace TravelioREST.Aerolinea;
 
-// Modelo para la respuesta real del API (SkaywardAir)
+// Modelo para la respuesta real del API (soporta ambos formatos: flights y data)
 public class ConsultaVuelosResponse
 {
+    public bool success { get; set; }
+    public string? message { get; set; }
     public int count { get; set; }
-    public FlightConsulta[] flights { get; set; }
-    public _LinksConsultaVuelos _links { get; set; }
+    public FlightConsulta[]? flights { get; set; }
+    public FlightConsulta[]? data { get; set; }
+    public _LinksConsultaVuelos? _links { get; set; }
+    
+    // Método para obtener vuelos independiente del formato
+    public FlightConsulta[] GetVuelos() => flights ?? data ?? Array.Empty<FlightConsulta>();
 }
 
 public class _LinksConsultaVuelos
@@ -50,11 +56,29 @@ public class FlightConsulta
     public string IdVuelo { get; set; }
     public string Origen { get; set; }
     public string Destino { get; set; }
-    public DateTime FechaSalida { get; set; }
+    
+    // Soporta tanto "fecha" como "fechaSalida"
+    [JsonPropertyName("fechaSalida")]
+    public DateTime? FechaSalidaRaw { get; set; }
+    
+    [JsonPropertyName("fecha")]
+    public DateTime? FechaRaw { get; set; }
+    
+    // Propiedad calculada que devuelve la fecha disponible
+    [JsonIgnore]
+    public DateTime FechaSalida => FechaSalidaRaw ?? FechaRaw ?? DateTime.MinValue;
+    
     public DateTime FechaLlegada { get; set; }
     public string TipoCabina { get; set; }
     public int Pasajeros { get; set; }
     public string NombreAerolinea { get; set; }
+    
+    // Soporta tanto "capacidadPasajeros" como "pasajeros" para capacidad
+    public int CapacidadPasajeros { get; set; }
+    
+    // Soporta tanto "capacidadActual" como "capacidadDisponible"
+    public int CapacidadActual { get; set; }
+    
     public decimal PrecioNormal { get; set; }
     public decimal PrecioActual { get; set; }
     public string Moneda { get; set; }
@@ -108,6 +132,6 @@ public static class VuelosGetter
 
         var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         var vuelos = await CachedHttpClient.GetFromJsonAsync<ConsultaVuelosResponse>(url, options);
-        return vuelos?.flights ?? throw new InvalidOperationException();
+        return vuelos?.GetVuelos() ?? Array.Empty<FlightConsulta>();
     }
 }

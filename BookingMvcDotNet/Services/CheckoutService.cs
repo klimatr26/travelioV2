@@ -504,8 +504,16 @@ public class CheckoutService(TravelioDbContext dbContext, ILogger<CheckoutServic
         var detalle = usandoRest ? detalleRest! : detalleSoap!;
         var uriReserva = $"{detalle.UriBase}{detalle.CrearReservaEndpoint}";
         
+        // Obtener la cuenta del proveedor para el pago
+        int cuentaProveedor = 0;
+        if (!string.IsNullOrEmpty(servicio.NumeroCuenta) && int.TryParse(servicio.NumeroCuenta, out var cuenta))
+        {
+            cuentaProveedor = cuenta;
+        }
+        
         var (idReserva, codigoReserva, _) = await VueloConnector.CrearReservaAsync(
-            uriReserva, item.IdProducto, holdId, cliente.CorreoElectronico, pasajeros, forceSoap: !usandoRest);
+            uriReserva, item.IdProducto, holdId, cliente.CorreoElectronico, pasajeros, 
+            forceSoap: !usandoRest, cuentaProveedor: cuentaProveedor);
 
         logger.LogInformation("Reserva vuelo creada: {IdReserva}", idReserva);
         reservaResult.CodigoReserva = codigoReserva;

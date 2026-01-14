@@ -6,30 +6,7 @@ using System.Text.Json;
 
 namespace TravelioREST.Aerolinea;
 
-//public sealed class ReservaRequest
-//{
-//    public int idVuelo { get; set; }
-//    public required string holdId { get; set; }
-//    public required string correo { get; set; }
-//    public required Pasajero[] pasajeros { get; set; }
-//}
-
-//public sealed class Pasajero
-//{
-//    public required string nombre { get; set; }
-//    public required string apellido { get; set; }
-//    public required string identificacion { get; set; }
-//}
-
-
-//public class ReservaResponse
-//{
-//    public int IdReserva { get; set; }
-//    public required string CodigoReserva { get; set; }
-//    public required string Estado { get; set; }
-//}
-
-// Formato original (otras aerolíneas)
+// Formato original (otras aerolíneas como Withfly)
 public class ReservaRequest
 {
     public string idVuelo { get; set; }
@@ -47,27 +24,39 @@ public class PasajeroReservaRequest
     public string identificacion { get; set; }
 }
 
-// Formato SkaywardAir (requiere FlightIds, Seats y HoldId por pasajero)
-public class ReservaRequestSkayward
+// Formato SkyAndes/SkaywardAir (según swagger)
+public class ReservaRequestSkyAndes
 {
+    public int UserId { get; set; }
     public int[] FlightIds { get; set; }
-    public string Correo { get; set; }
-    public PasajeroReservaSkayward[] Pasajeros { get; set; }
+    public PaymentInfo Payment { get; set; }
+    public PasajeroSkyAndes[] Pasajeros { get; set; }
 }
 
-public class PasajeroReservaSkayward
+public class PaymentInfo
 {
-    public string Nombre { get; set; }
-    public string Apellido { get; set; }
-    public string FechaNacimiento { get; set; }
-    public string TipoIdentificacion { get; set; }
-    public string Identificacion { get; set; }
-    public string[] Seats { get; set; }
+    public long CuentaOrigen { get; set; }
+    public long CuentaDestino { get; set; }
+}
+
+public class PasajeroSkyAndes
+{
+    public string FullName { get; set; }
+    public string DocumentNumber { get; set; }
+    public DateTime BirthDate { get; set; }
+    public string Nationality { get; set; }
+    public SeatInfo[] Seats { get; set; }
+}
+
+public class SeatInfo
+{
+    public int FlightId { get; set; }
+    public int SeatId { get; set; }
     public string HoldId { get; set; }
 }
 
-// Respuesta directa de SkaywardAir
-public class ReservaResponseSkayward
+// Respuesta directa de SkaywardAir/SkyAndes
+public class ReservaResponseDirect
 {
     public int IdReserva { get; set; }
     public string CodigoReserva { get; set; }
@@ -76,6 +65,7 @@ public class ReservaResponseSkayward
     public object _links { get; set; }
 }
 
+// Respuesta con wrapper
 public class ReservaResponse
 {
     public bool success { get; set; }
@@ -96,27 +86,37 @@ public class DataReservaResponse
 
 public static class ReservationCreator
 {
+    // Cuenta default de Travelio
+    private const int CuentaTravelio = 242;
+
     public static async Task<ReservaResponse> CreateReservationAsync(string uri,
         string idVuelo,
         string idHold,
         string correo,
-        (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros)
+        (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
+        int cuentaProveedor = 0)
     {
-        // Primero intentar formato SkaywardAir (FlightIds + Seats/HoldId por pasajero)
+        // Primero intentar formato SkyAndes/SkaywardAir (según swagger)
         try
         {
-            return await CreateReservationSkaywardAsync(uri, idVuelo, idHold, correo, pasajeros);
+            return await CreateReservationSkyAndesAsync(uri, idVuelo, idHold, correo, pasajeros, cuentaProveedor);
         }
-        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.BadRequest)
+        catch (HttpRequestException ex)
         {
-            // Si falla con 400, intentar formato original
+            // Si es error de pago/saldo, re-lanzar para que el caller lo maneje
+            var errorMsg = ex.Message?.ToLowerInvariant() ?? "";
+            if (errorMsg.Contains("saldo") || errorMsg.Contains("payment") || errorMsg.Contains("cuenta"))
+            {
+                throw;
+            }
+            // Si es 400 por otro motivo, intentar formato alternativo
         }
         catch
         {
             // Si falla por otra razón, intentar formato original
         }
 
-        // Intentar formato original (otras aerolíneas)
+        // Intentar formato original (otras aerolíneas como Withfly)
         var reservaRequest = new ReservaRequest
         {
             idVuelo = idVuelo,
@@ -135,13 +135,70 @@ public static class ReservationCreator
         var response = await Global.CachedHttpClient.PostAsJsonAsync(uri, reservaRequest);
         response.EnsureSuccessStatusCode();
         
+        return await ParseReservaResponseAsync(response);
+    }
+
+    private static async Task<ReservaResponse> CreateReservationSkyAndesAsync(string uri,
+        string idVuelo,
+        string idHold,
+        string correo,
+        (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros,
+        int cuentaProveedor = 0)
+    {
+        // Parsear idVuelo a entero
+        int flightId = int.TryParse(idVuelo, out var fid) ? fid : 0;
+
+        // Generar pasajeros con el formato SkyAndes
+        var pasajerosSkyAndes = new List<PasajeroSkyAndes>();
+        int seatId = 1;
+        
+        foreach (var p in pasajeros)
+        {
+            pasajerosSkyAndes.Add(new PasajeroSkyAndes
+            {
+                FullName = $"{p.nombre} {p.apellido}",
+                DocumentNumber = p.identificacion,
+                BirthDate = p.fechaNacimiento,
+                Nationality = "Ecuador",
+                Seats = new[]
+                {
+                    new SeatInfo
+                    {
+                        FlightId = flightId,
+                        SeatId = seatId++,
+                        HoldId = idHold
+                    }
+                }
+            });
+        }
+
+        var request = new ReservaRequestSkyAndes
+        {
+            UserId = 0, // El sistema Travelio maneja usuarios internamente
+            FlightIds = new[] { flightId },
+            Payment = new PaymentInfo
+            {
+                CuentaOrigen = CuentaTravelio, // Cuenta de Travelio
+                CuentaDestino = cuentaProveedor > 0 ? cuentaProveedor : 0 // Cuenta del proveedor
+            },
+            Pasajeros = pasajerosSkyAndes.ToArray()
+        };
+
+        var response = await Global.CachedHttpClient.PostAsJsonAsync(uri, request);
+        response.EnsureSuccessStatusCode();
+
+        return await ParseReservaResponseAsync(response);
+    }
+
+    private static async Task<ReservaResponse> ParseReservaResponseAsync(HttpResponseMessage response)
+    {
         var jsonString = await response.Content.ReadAsStringAsync();
         
         // Intentar formato wrapper primero
         try
         {
             var reservaResponse = JsonSerializer.Deserialize<ReservaResponse>(jsonString);
-            if (reservaResponse?.data != null)
+            if (reservaResponse?.data != null && !string.IsNullOrEmpty(reservaResponse.data.idReserva))
             {
                 return reservaResponse;
             }
@@ -151,8 +208,8 @@ public static class ReservationCreator
         // Intentar formato directo
         try
         {
-            var directResponse = JsonSerializer.Deserialize<ReservaResponseSkayward>(jsonString);
-            if (directResponse != null && directResponse.IdReserva > 0)
+            var directResponse = JsonSerializer.Deserialize<ReservaResponseDirect>(jsonString);
+            if (directResponse != null && (directResponse.IdReserva > 0 || !string.IsNullOrEmpty(directResponse.CodigoReserva)))
             {
                 return new ReservaResponse
                 {
@@ -169,73 +226,6 @@ public static class ReservationCreator
         }
         catch { }
         
-        throw new InvalidOperationException("No se pudo deserializar la respuesta de reserva");
-    }
-
-    private static async Task<ReservaResponse> CreateReservationSkaywardAsync(string uri,
-        string idVuelo,
-        string idHold,
-        string correo,
-        (string nombre, string apellido, string tipoIdentificacion, string identificacion, DateTime fechaNacimiento)[] pasajeros)
-    {
-        // Generar asientos automáticamente para cada pasajero
-        var pasajerosSkayward = new List<PasajeroReservaSkayward>();
-        for (int i = 0; i < pasajeros.Length; i++)
-        {
-            int row = (i / 6) + 1;
-            char col = (char)('A' + (i % 6));
-            string seat = $"{row}{col}";
-
-            pasajerosSkayward.Add(new PasajeroReservaSkayward
-            {
-                Nombre = pasajeros[i].nombre,
-                Apellido = pasajeros[i].apellido,
-                TipoIdentificacion = pasajeros[i].tipoIdentificacion,
-                Identificacion = pasajeros[i].identificacion,
-                FechaNacimiento = pasajeros[i].fechaNacimiento.ToString("yyyy-MM-dd"),
-                Seats = new[] { seat },
-                HoldId = idHold
-            });
-        }
-
-        // Parsear idVuelo a entero
-        int flightId = int.TryParse(idVuelo, out var fid) ? fid : 0;
-
-        var request = new ReservaRequestSkayward
-        {
-            FlightIds = new[] { flightId },
-            Correo = correo,
-            Pasajeros = pasajerosSkayward.ToArray()
-        };
-
-        var response = await Global.CachedHttpClient.PostAsJsonAsync(uri, request);
-        response.EnsureSuccessStatusCode();
-
-        var jsonString = await response.Content.ReadAsStringAsync();
-
-        // Intentar formato directo de SkaywardAir
-        try
-        {
-            var directResponse = JsonSerializer.Deserialize<ReservaResponseSkayward>(jsonString);
-            if (directResponse != null && directResponse.IdReserva > 0)
-            {
-                return new ReservaResponse
-                {
-                    success = true,
-                    data = new DataReservaResponse
-                    {
-                        success = true,
-                        idReserva = directResponse.IdReserva.ToString(),
-                        codigoReserva = directResponse.CodigoReserva ?? directResponse.IdReserva.ToString(),
-                        total = directResponse.Total
-                    }
-                };
-            }
-        }
-        catch { }
-
-        // Intentar formato wrapper
-        var reservaResponse = JsonSerializer.Deserialize<ReservaResponse>(jsonString);
-        return reservaResponse ?? throw new InvalidOperationException("No se pudo deserializar la respuesta de reserva");
+        throw new InvalidOperationException($"No se pudo deserializar la respuesta de reserva: {jsonString}");
     }
 }
